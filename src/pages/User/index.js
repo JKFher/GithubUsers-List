@@ -1,9 +1,65 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import PropTypes from 'prop-types';
+import api from '../../services/api';
 
-import {View} from 'react-native';
+import {
+  Container,
+  Header,
+  Name,
+  Avatar,
+  Bio,
+  Stars,
+  Starred,
+  OwnerAvatar,
+  Info,
+  Title,
+  Author,
+} from './styles';
 
-// import { Container } from './styles';
+export default function User({navigation}) {
+  const [starred, setStarred] = useState([]);
+  const user = navigation.getParam('user');
 
-const User = () => <View />;
+  useEffect(() => {
+    async function getUserStarred() {
+      const response = await api.get(`/users/${user.login}/starred`);
+      setStarred(response.data);
+    }
 
-export default User;
+    getUserStarred();
+  }, []);
+
+  return (
+    <Container>
+      <Header>
+        <Avatar source={{uri: user.avatar}} />
+        <Name>{user.name}</Name>
+        <Bio>{user.bio}</Bio>
+      </Header>
+
+      <Stars
+        data={starred}
+        keyExtractor={star => String(star.id)}
+        renderItem={({item}) => (
+          <Starred>
+            <OwnerAvatar source={{uri: item.owner.avatar_url}} />
+            <Info>
+              <Title>{item.name}</Title>
+              <Author>{item.owner.login}</Author>
+            </Info>
+          </Starred>
+        )}
+      />
+    </Container>
+  );
+}
+
+User.navigationOptions = ({navigation}) => ({
+  title: navigation.getParam('user').name,
+});
+
+User.propTypes = {
+  navigation: PropTypes.shape({
+    getParam: PropTypes.func,
+  }).isRequired,
+};
