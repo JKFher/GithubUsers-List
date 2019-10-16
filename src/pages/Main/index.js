@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Keyboard, ActivityIndicator} from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import api from '../../services/api';
@@ -18,10 +19,26 @@ import {
   ProfileButtonText,
 } from './styles';
 
-export default function Main() {
+export default function Main({navigation}) {
   const [loading, setLoading] = useState(false);
   const [newUser, setNewUser] = useState('');
   const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    async function getUsers() {
+      const storageUsers = await AsyncStorage.getItem('users');
+
+      if (storageUsers) {
+        setUsers(JSON.parse(storageUsers));
+      }
+    }
+
+    getUsers();
+  }, []);
+
+  useEffect(() => {
+    AsyncStorage.setItem('users', JSON.stringify(users));
+  }, [users]);
 
   async function handleAddUser() {
     setLoading(true);
@@ -40,6 +57,10 @@ export default function Main() {
     setLoading(false);
 
     Keyboard.dismiss();
+  }
+
+  function handleNavigate(user) {
+    navigation.navigate('User', {user});
   }
 
   return (
@@ -72,7 +93,7 @@ export default function Main() {
             <Name>{item.name}</Name>
             <Bio>{item.bio}</Bio>
 
-            <ProfileButton>
+            <ProfileButton onPress={() => handleNavigate(item)}>
               <ProfileButtonText>Open Profile</ProfileButtonText>
             </ProfileButton>
           </User>
